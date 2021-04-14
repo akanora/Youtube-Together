@@ -64,6 +64,54 @@ client.on('message', async message => {
         });
     }
 
+    if (command === `betrayal`) {
+        if(!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
+        fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
+            method: "POST",
+            body: JSON.stringify({
+                max_age: 86400,
+                max_uses: 0,
+                target_application_id: "773336526917861400", // betrayal together
+                target_type: 2,
+                temporary: false,
+                validate: null
+            }),
+            headers: {
+                "Authorization": `Bot ${client.token}`,
+                "Content-Type": "application/json"
+            }
+        }).then(response => response.json()).then(data => {
+      console.log(data)
+            message.channel.send(`
+            ✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}
+            `);
+        });
+    }
+	
+    if (command === `fishing`) {
+        if(!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
+        fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
+            method: "POST",
+            body: JSON.stringify({
+                max_age: 86400,
+                max_uses: 0,
+                target_application_id: "814288819477020702", // fishing together
+                target_type: 2,
+                temporary: false,
+                validate: null
+            }),
+            headers: {
+                "Authorization": `Bot ${client.token}`,
+                "Content-Type": "application/json"
+            }
+        }).then(response => response.json()).then(data => {
+      console.log(data)
+            message.channel.send(`
+            ✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}
+            `);
+        });
+    }
+	
     if (command === `help`) {
         message.channel.send("Read the bot status!\n\nDeveloper: Nora#1768")
     }
