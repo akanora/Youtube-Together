@@ -5,19 +5,19 @@ const prefix = '-';
 const dotenv = require('dotenv').config();
 
 const embed = new Discord.MessageEmbed()
-.setColor('#ffc83d')
-.setTitle('Youtube Together')
-.setURL('https://github.com/Nooraje/Youtube-Together')
-.setAuthor('Youtube Together by Nora')
-.setDescription("Here's my list of commands")
-.setThumbnail('https://cdn.discordapp.com/avatars/740635911225737256/38363f86299ffdbc6481f689a842c716.png')
-.addField("So here's my things", "```Misc```****-help**** *get some help*\n****-invite**** *invite my bot*\n\
+    .setColor('#ffc83d')
+    .setTitle('Youtube Together')
+    .setURL('https://github.com/Nooraje/Youtube-Together')
+    .setAuthor('Youtube Together by Nora')
+    .setDescription("Here's my list of commands")
+    .setThumbnail('https://cdn.discordapp.com/avatars/740635911225737256/38363f86299ffdbc6481f689a842c716.png')
+    .addField("So here's my things", "```Misc```****-help**** *get some help*\n****-invite**** *invite my bot*\n\
 ```Activities```****-w2g**** *Watch some youtube with your friend!*\n****-poker**** *Play some poker with your friend!*\n****-betrayal**** *Wanna play among us from discord?*\n****-fishing**** *Catch some fish with your friend!*\
 ", true);
 
 client.on('ready', () => {
     console.log(`Watch2Gether : Logged in as ${client.user.tag}`);
-    client.user.setActivity("-help", {
+    client.user.setActivity("-w2g", {
         type: "WATCHING"
     });
 });
@@ -50,7 +50,9 @@ client.on('message', async message => {
             message.channel.send(`
 			✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}
 			`);
-        });
+        }).catch(e => {
+            message.channel.send("❌ | Could not start **YouTube Together**!");
+        })
     }
 
     if (cmd === `poker`) {
@@ -73,7 +75,9 @@ client.on('message', async message => {
             message.channel.send(`
 			✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}
 			`);
-        });
+        }).catch(e => {
+            message.channel.send("❌ | Could not start **Poker Night**!");
+        })
     }
 
     if (cmd === `betrayal`) {
@@ -96,7 +100,9 @@ client.on('message', async message => {
             message.channel.send(`
             ✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}
             `);
-        });
+        }).catch(e => {
+            message.channel.send("❌ | Could not start **Betrayal.io**!");
+        })
     }
 
     if (cmd === `fishing`) {
@@ -119,7 +125,9 @@ client.on('message', async message => {
             message.channel.send(`
             ✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}
             `);
-        });
+        }).catch(e => {
+            message.channel.send("❌ | Could not start **Fishington.io**!");
+        })
     }
 
     if (cmd === `help`) {
