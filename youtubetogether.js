@@ -130,6 +130,17 @@ client.on('message', async message => {
         })
     }
 
+    if (cmd === 'servers') {
+        let guilds = client.guilds.cache.array().join('\n')
+
+        const serverlist = new Discord.MessageEmbed()
+            .setTitle(`Servers Youtube Together is in.`)
+            .setDescription(guilds)
+            .setFooter(`Invite Youtube Together <$`)
+
+        message.channel.send(serverlist)
+    }
+
     if (cmd === `help`) {
         message.channel.send(embed)
     }
