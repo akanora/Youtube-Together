@@ -17,7 +17,7 @@ const embed = new Discord.MessageEmbed()
 
 client.on('ready', () => {
     console.log(`Watch2Gether : Logged in as ${client.user.tag}`);
-    client.user.setActivity("-w2g", {
+    client.user.setActivity("-help", {
         type: "WATCHING"
     });
 });
