@@ -4,6 +4,17 @@ const fetch = require("node-fetch");
 const prefix = '-';
 const dotenv = require('dotenv').config();
 
+const embed = new Discord.MessageEmbed()
+.setColor('#ffc83d')
+.setTitle('Youtube Together')
+.setURL('https://github.com/Nooraje/Youtube-Together')
+.setAuthor('Youtube Together by Nora')
+.setDescription("Here's my list of commands")
+.setThumbnail('https://cdn.discordapp.com/avatars/740635911225737256/38363f86299ffdbc6481f689a842c716.png')
+.addField("So here's my things", "```Misc```****-help**** *get some help*\n****-invite**** *invite my bot*\n\
+```Activities```****-w2g**** *Watch some youtube with your friend!*\n****-poker**** *Play some poker with your friend!*\n****-betrayal**** *Wanna play among us from discord?*\n****-fishing**** *Catch some fish with your friend!*\
+", true);
+
 client.on('ready', () => {
     console.log(`Watch2Gether : Logged in as ${client.user.tag}`);
     client.user.setActivity("-w2g", {
@@ -13,11 +24,13 @@ client.on('ready', () => {
 
 client.on('message', async message => {
     if (message.author.bot) return;
+    if (message.content.indexOf(prefix) !== 0) return;
 
     var args = message.content.match(/[^_\W]+/g);
     args = (args == null) ? "" : args.join(' ').toLowerCase().trim().split(/ +/g);
-    var command = (args != "" && message.content.charAt(0) === prefix) ? args.shift() : false;
-    if (command === `w2g`) {
+    var cmd = (args != "" && message.content.charAt(0) === prefix) ? args.shift() : false;
+    if (cmd === `w2g`) {
+        if (!message.channel.permissionsFor(message.guild.me).has("CREATE_INSTANT_INVITE")) return message.channel.send("❌ | Missing permission: `Create Invite`");
         if (!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
         fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
             method: "POST",
@@ -34,14 +47,13 @@ client.on('message', async message => {
                 "Content-Type": "application/json"
             }
         }).then(response => response.json()).then(data => {
-            console.log(data)
             message.channel.send(`
 			✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}
 			`);
         });
     }
 
-    if (command === `poker`) {
+    if (cmd === `poker`) {
         if (!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
         fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
             method: "POST",
@@ -64,8 +76,8 @@ client.on('message', async message => {
         });
     }
 
-    if (command === `betrayal`) {
-        if(!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
+    if (cmd === `betrayal`) {
+        if (!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
         fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
             method: "POST",
             body: JSON.stringify({
@@ -81,15 +93,14 @@ client.on('message', async message => {
                 "Content-Type": "application/json"
             }
         }).then(response => response.json()).then(data => {
-      console.log(data)
             message.channel.send(`
             ✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}
             `);
         });
     }
-	
-    if (command === `fishing`) {
-        if(!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
+
+    if (cmd === `fishing`) {
+        if (!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
         fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
             method: "POST",
             body: JSON.stringify({
@@ -105,18 +116,17 @@ client.on('message', async message => {
                 "Content-Type": "application/json"
             }
         }).then(response => response.json()).then(data => {
-      console.log(data)
             message.channel.send(`
             ✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}
             `);
         });
     }
-	
-    if (command === `help`) {
-        message.channel.send("Read the bot status!\n\nDeveloper: Nora#1768")
+
+    if (cmd === `help`) {
+        message.channel.send(embed)
     }
 
-    if (command === `invite`) {
+    if (cmd === `invite`) {
         message.channel.send("https://discord.com/oauth2/authorize?client_id=831408659262472222&scope=bot&permissions=0")
     }
 });
