@@ -146,7 +146,7 @@ client.on('message', async message => {
     }
 
     if (cmd === `invite`) {
-        message.channel.send("https://discord.com/oauth2/authorize?client_id=831408659262472222&scope=bot&permissions=0")
+        message.channel.send("https://discord.com/oauth2/authorize?client_id=831408659262472222&scope=bot&permissions=16385")
     }
 });
 client.login(process.env.DISCORD_TOKEN);
