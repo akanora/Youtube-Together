@@ -4,13 +4,14 @@ const fetch = require("node-fetch");
 const prefix = '-';
 const dotenv = require('dotenv').config();
 
-const embed = new Discord.MessageEmbed()
+const helpembed = new Discord.MessageEmbed()
     .setColor('#ffc83d')
     .setTitle('Youtube Together')
     .setURL('https://github.com/Nooraje/Youtube-Together')
-    .setAuthor('Youtube Together by Nora#1768')
-    .setDescription("Here's my list of commands")
-    .setThumbnail('https://cdn.discordapp.com/avatars/740635911225737256/38363f86299ffdbc6481f689a842c716.png')
+    .setDescription("Watch youtube together, fish with your friends and even play among us!")
+    .setThumbnail('https://www.sehertunali.com/wp-content/uploads/2018/12/youtube-logo.png')
+    .setImage('https://cdn.discordapp.com/attachments/780490774251962379/833053942648012851/unknown.png')
+    .setFooter('YouTube With Friends © 2021 Google LLC', 'https://www.sehertunali.com/wp-content/uploads/2018/12/youtube-logo.png')
     .addField("So here's my things", "```Misc```****-help**** *get some help*\n****-invite**** *invite my bot*\n\
 ```Activities```****-w2g**** *Watch some youtube with your friend!*\n****-poker**** *Play some poker with your friend!*\n****-betrayal**** *Wanna play among us from discord?*\n****-fishing**** *Catch some fish with your friend!*\
 ", true);
@@ -142,11 +143,30 @@ client.on('message', async message => {
     }
 
     if (cmd === `help`) {
-        message.channel.send(embed)
+        if (!message.channel.permissionsFor(message.guild.me).has("EMBED_LINKS")) return message.channel.send("❌ | Missing permission: `EMBED_LINKS`");
+        message.channel.send(helpembed)
     }
 
     if (cmd === `invite`) {
         message.channel.send("https://discord.com/oauth2/authorize?client_id=831408659262472222&scope=bot&permissions=16385")
+    }
+
+    if (cmd === `stats`) {
+        guildcount = client.guilds.cache.size
+        membercount = client.users.cache.size
+        channelcount = client.channels.cache.size
+        const statsembed = new Discord.MessageEmbed()
+            .setColor('#ffc83d')
+            .setTitle('Youtube Together')
+            .setURL('https://github.com/Nooraje/Youtube-Together')
+            .addFields(
+                { name: 'Guilds', value: guildcount, inline: true },
+                { name: 'Users', value: membercount, inline: true },
+                { name: 'Channels', value: channelcount, inline: true },
+            )
+            .setFooter('YouTube With Friends © 2021 Google LLC', 'https://www.sehertunali.com/wp-content/uploads/2018/12/youtube-logo.png')
+
+        message.channel.send(statsembed)
     }
 });
 client.login(process.env.DISCORD_TOKEN);
