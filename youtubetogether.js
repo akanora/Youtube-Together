@@ -8,7 +8,7 @@ const embed = new Discord.MessageEmbed()
     .setColor('#ffc83d')
     .setTitle('Youtube Together')
     .setURL('https://github.com/Nooraje/Youtube-Together')
-    .setAuthor('Youtube Together by Nora')
+    .setAuthor('Youtube Together by Nora#1768')
     .setDescription("Here's my list of commands")
     .setThumbnail('https://cdn.discordapp.com/avatars/740635911225737256/38363f86299ffdbc6481f689a842c716.png')
     .addField("So here's my things", "```Misc```****-help**** *get some help*\n****-invite**** *invite my bot*\n\
