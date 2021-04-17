@@ -3,6 +3,7 @@ const client = new Discord.Client();
 const fetch = require("node-fetch");
 const prefix = '-';
 const dotenv = require('dotenv').config();
+const hastebin = require("hastebin-gen");
 
 const helpembed = new Discord.MessageEmbed()
     .setColor('#ffc83d')
@@ -129,17 +130,6 @@ client.on('message', async message => {
         }).catch(e => {
             message.channel.send("❌ | Could not start **Fishington.io**!");
         })
-    }
-
-    if (cmd === 'servers') {
-        let guilds = client.guilds.cache.array().join('\n')
-
-        const serverlist = new Discord.MessageEmbed()
-            .setTitle(`Servers Youtube Together is in.`)
-            .setDescription(guilds)
-            .setFooter(`Invite Youtube Together <$`)
-
-        message.channel.send(serverlist)
     }
 
     if (cmd === `help`) {
