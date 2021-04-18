@@ -2,8 +2,6 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const fetch = require("node-fetch");
 const prefix = '-';
-const dotenv = require('dotenv').config();
-const hastebin = require("hastebin-gen");
 
 const helpembed = new Discord.MessageEmbed()
     .setColor('#ffc83d')
