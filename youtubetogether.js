@@ -2,6 +2,7 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const fetch = require("node-fetch");
 const prefix = '-';
+require('dotenv').config()
 
 const helpembed = new Discord.MessageEmbed()
     .setColor('#ffc83d')
@@ -30,7 +31,9 @@ client.on('message', async message => {
     args = (args == null) ? "" : args.join(' ').toLowerCase().trim().split(/ +/g);
     var cmd = (args != "" && message.content.charAt(0) === prefix) ? args.shift() : false;
     if (cmd === `w2g`) {
+	const channel = message.mentions.channels.first() || message.guild.channels.cache.get(args[0]);
         if (!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
+	if (!message.member.voice.channel.permissionsFor(message.guild.me).has("CREATE_INSTANT_INVITE")) return message.channel.send("❌ | I need `CREATE_INSTANT_INVITE` permission");
         fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
             method: "POST",
             body: JSON.stringify({
@@ -46,7 +49,7 @@ client.on('message', async message => {
                 "Content-Type": "application/json"
             }
         }).then(response => response.json()).then(data => {
-	    if(data.code == "50035") {
+	    if(data.code == 50035) {
 		    return message.channel.send("❌ | Missing permission: `CREATE_INSTANT_INVITE`")
 	    } else {
 	            return message.channel.send(`✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}`);
@@ -73,7 +76,7 @@ client.on('message', async message => {
                 "Content-Type": "application/json"
             }
         }).then(response => response.json()).then(data => {
-	    if(data.code == "50035") {
+	    if(data.code == 50035) {
 		    return message.channel.send("❌ | Missing permission: `CREATE_INSTANT_INVITE`")
 	    } else {
 	            return message.channel.send(`✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}`);
@@ -100,7 +103,7 @@ client.on('message', async message => {
                 "Content-Type": "application/json"
             }
         }).then(response => response.json()).then(data => {
-	    if(data.code == "50035") {
+	    if(data.code == 50035) {
 		    return message.channel.send("❌ | Missing permission: `CREATE_INSTANT_INVITE`")
 	    } else {
 	            return message.channel.send(`✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}`);
@@ -127,7 +130,7 @@ client.on('message', async message => {
                 "Content-Type": "application/json"
             }
         }).then(response => response.json()).then(data => {
-	    if(data.code == "50035") {
+	    if(data.code == 50035) {
 		    return message.channel.send("❌ | Missing permission: `CREATE_INSTANT_INVITE`")
 	    } else {
 	            return message.channel.send(`✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}`);
