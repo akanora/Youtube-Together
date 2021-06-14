@@ -30,7 +30,7 @@ client.on('message', async message => {
     args = (args == null) ? "" : args.join(' ').toLowerCase().trim().split(/ +/g);
     var cmd = (args != "" && message.content.charAt(0) === prefix) ? args.shift() : false;
     if (cmd === `w2g`) {
-        if (!message.channel.permissionsFor(message.guild.me).has("CREATE_INSTANT_INVITE")) return message.channel.send("❌ | Missing permission: `Create Invite`");
+	if(!guild.me.hasPermission("CREATE_INSTANT_INVITE") return message.channel.send("❌ | Missing permission: `CREATE_INSTANT_INVITE`")
         if (!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
         fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
             method: "POST",
@@ -56,6 +56,7 @@ client.on('message', async message => {
     }
 
     if (cmd === `poker`) {
+	if(!guild.me.hasPermission("CREATE_INSTANT_INVITE") return message.channel.send("❌ | Missing permission: `CREATE_INSTANT_INVITE`")
         if (!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
         fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
             method: "POST",
@@ -81,6 +82,7 @@ client.on('message', async message => {
     }
 
     if (cmd === `betrayal`) {
+	if(!guild.me.hasPermission("CREATE_INSTANT_INVITE") return message.channel.send("❌ | Missing permission: `CREATE_INSTANT_INVITE`")
         if (!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
         fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
             method: "POST",
@@ -106,6 +108,7 @@ client.on('message', async message => {
     }
 
     if (cmd === `fishing`) {
+	if(!guild.me.hasPermission("CREATE_INSTANT_INVITE") return message.channel.send("❌ | Missing permission: `CREATE_INSTANT_INVITE`")
         if (!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
         fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
             method: "POST",
@@ -131,7 +134,7 @@ client.on('message', async message => {
     }
 
     if (cmd === `help`) {
-        if (!message.channel.permissionsFor(message.guild.me).has("EMBED_LINKS")) return message.channel.send("❌ | Missing permission: `EMBED_LINKS`");
+	if(!guild.me.hasPermission("EMBED_LINKS") return message.channel.send("❌ | Missing permission: `EMBED_LINKS`")
         message.channel.send(helpembed)
     }
 
