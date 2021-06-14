@@ -60,7 +60,9 @@ client.on('message', async message => {
     }
 
     if (cmd === `poker`) {
+	const channel = message.mentions.channels.first() || message.guild.channels.cache.get(args[0]);
         if (!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
+	if (!message.member.voice.channel.permissionsFor(message.guild.me).has("CREATE_INSTANT_INVITE")) return message.channel.send("❌ | I need `CREATE_INSTANT_INVITE` permission");
         fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
             method: "POST",
             body: JSON.stringify({
@@ -87,7 +89,9 @@ client.on('message', async message => {
     }
 
     if (cmd === `betrayal`) {
+	const channel = message.mentions.channels.first() || message.guild.channels.cache.get(args[0]);
         if (!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
+	if (!message.member.voice.channel.permissionsFor(message.guild.me).has("CREATE_INSTANT_INVITE")) return message.channel.send("❌ | I need `CREATE_INSTANT_INVITE` permission");
         fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
             method: "POST",
             body: JSON.stringify({
@@ -114,7 +118,9 @@ client.on('message', async message => {
     }
 
     if (cmd === `fishing`) {
+	const channel = message.mentions.channels.first() || message.guild.channels.cache.get(args[0]);
         if (!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
+	if (!message.member.voice.channel.permissionsFor(message.guild.me).has("CREATE_INSTANT_INVITE")) return message.channel.send("❌ | I need `CREATE_INSTANT_INVITE` permission");
         fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
             method: "POST",
             body: JSON.stringify({
@@ -141,6 +147,8 @@ client.on('message', async message => {
     }
 
     if (cmd === `help`) {
+	const channel = message.mentions.channels.first() || message.guild.channels.cache.get(args[0]);
+	if (!message.channel.permissionsFor(message.guild.me).has("EMBED_LINKS")) return message.channel.send("❌ | I need `EMBED_LINKS` permission");
         message.channel.send(helpembed)
     }
 
