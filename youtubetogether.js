@@ -30,7 +30,6 @@ client.on('message', async message => {
     args = (args == null) ? "" : args.join(' ').toLowerCase().trim().split(/ +/g);
     var cmd = (args != "" && message.content.charAt(0) === prefix) ? args.shift() : false;
     if (cmd === `w2g`) {
-	if(!message.guild.me.hasPermission("CREATE_INSTANT_INVITE")) return message.channel.send("❌ | Missing permission: `CREATE_INSTANT_INVITE`")
         if (!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
         fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
             method: "POST",
@@ -47,16 +46,17 @@ client.on('message', async message => {
                 "Content-Type": "application/json"
             }
         }).then(response => response.json()).then(data => {
-            message.channel.send(`
-			✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}
-			`);
+	    if(data.code == "50035") {
+		    return message.channel.send("❌ | Missing permission: `CREATE_INSTANT_INVITE`")
+	    } else {
+	            return message.channel.send(`✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}`);
+	    }
         }).catch(e => {
             message.channel.send("❌ | Could not start **YouTube Together**!");
         })
     }
 
     if (cmd === `poker`) {
-	if(!message.guild.me.hasPermission("CREATE_INSTANT_INVITE")) return message.channel.send("❌ | Missing permission: `CREATE_INSTANT_INVITE`")
         if (!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
         fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
             method: "POST",
@@ -73,16 +73,17 @@ client.on('message', async message => {
                 "Content-Type": "application/json"
             }
         }).then(response => response.json()).then(data => {
-            message.channel.send(`
-			✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}
-			`);
+	    if(data.code == "50035") {
+		    return message.channel.send("❌ | Missing permission: `CREATE_INSTANT_INVITE`")
+	    } else {
+	            return message.channel.send(`✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}`);
+	    }
         }).catch(e => {
             message.channel.send("❌ | Could not start **Poker Night**!");
         })
     }
 
     if (cmd === `betrayal`) {
-	if(!message.guild.me.hasPermission("CREATE_INSTANT_INVITE")) return message.channel.send("❌ | Missing permission: `CREATE_INSTANT_INVITE`")
         if (!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
         fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
             method: "POST",
@@ -99,16 +100,17 @@ client.on('message', async message => {
                 "Content-Type": "application/json"
             }
         }).then(response => response.json()).then(data => {
-            message.channel.send(`
-            ✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}
-            `);
+	    if(data.code == "50035") {
+		    return message.channel.send("❌ | Missing permission: `CREATE_INSTANT_INVITE`")
+	    } else {
+	            return message.channel.send(`✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}`);
+	    }
         }).catch(e => {
             message.channel.send("❌ | Could not start **Betrayal.io**!");
         })
     }
 
     if (cmd === `fishing`) {
-	if(!message.guild.me.hasPermission("CREATE_INSTANT_INVITE")) return message.channel.send("❌ | Missing permission: `CREATE_INSTANT_INVITE`")
         if (!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
         fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
             method: "POST",
@@ -125,16 +127,17 @@ client.on('message', async message => {
                 "Content-Type": "application/json"
             }
         }).then(response => response.json()).then(data => {
-            message.channel.send(`
-            ✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}
-            `);
+	    if(data.code == "50035") {
+		    return message.channel.send("❌ | Missing permission: `CREATE_INSTANT_INVITE`")
+	    } else {
+	            return message.channel.send(`✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}`);
+	    }
         }).catch(e => {
             message.channel.send("❌ | Could not start **Fishington.io**!");
         })
     }
 
     if (cmd === `help`) {
-	if(!message.guild.me.hasPermission("EMBED_LINKS")) return message.channel.send("❌ | Missing permission: `EMBED_LINKS`")
         message.channel.send(helpembed)
     }
 
