@@ -158,7 +158,7 @@ client.on('message', async message => {
 
     if (cmd === `stats`) {
         guildcount = client.guilds.cache.size
-        membercount = client.users.cache.size
+        membercount = message.client.guilds.cache.map((g) => g.memberCount).reduce((a, c) => a + c)
         channelcount = client.channels.cache.size
         const statsembed = new Discord.MessageEmbed()
             .setColor('#ffc83d')
