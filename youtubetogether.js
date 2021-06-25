@@ -10,17 +10,18 @@ const helpembed = new Discord.MessageEmbed()
     .setURL('https://github.com/Nooraje/Youtube-Together')
     .setDescription("Watch youtube together, fish with your friends and even play among us!")
     .setThumbnail('https://www.sehertunali.com/wp-content/uploads/2018/12/youtube-logo.png')
-    .setImage('https://cdn.discordapp.com/attachments/780490774251962379/833053942648012851/unknown.png')
+    .setImage('https://cdn.discordapp.com/attachments/852604736715882496/857860923545092146/unknown.png')
     .setFooter('YouTube With Friends © 2021 Google LLC', 'https://www.sehertunali.com/wp-content/uploads/2018/12/youtube-logo.png')
     .addField("So here's my things", "```Misc```****-help**** *get some help*\n****-invite**** *invite my bot*\n\
-```Activities```****-w2g**** *Watch some youtube with your friend!*\n****-poker**** *Play some poker with your friend!*\n****-betrayal**** *Wanna play among us from discord?*\n****-fishing**** *Catch some fish with your friend!*\
-", true);
+    ```Activities```****-w2g**** *Watch some youtube with your friend!*\n****-poker**** *Play some poker with your friend!*\n****-betrayal**** *Wanna play among us from discord?*\n****-fishing**** *Catch some fish with your friend!*\n****-chess**** *How about playing chess with your friends?*\n", true);
 
 client.on('ready', () => {
     console.log(`Watch2Gether : Logged in as ${client.user.tag}`);
-    client.user.setActivity("-w2g", {
-        type: "WATCHING"
-    });
+    setInterval(function () {
+        client.user.setActivity("-w2g", {
+            type: "WATCHING"
+        });
+    }, 3600000);
 });
 
 client.on('message', async message => {
@@ -141,6 +142,35 @@ client.on('message', async message => {
 	    } else {
 	            return message.channel.send(`✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}`);
 	    }
+        }).catch(e => {
+            message.channel.send("❌ | Could not start **Fishington.io**!");
+        })
+    }
+	
+    if (cmd === `chess`) {
+        const channel = message.mentions.channels.first() || message.guild.channels.cache.get(args[0]);
+        if (!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
+        if (!message.member.voice.channel.permissionsFor(message.guild.me).has("CREATE_INSTANT_INVITE")) return message.channel.send("❌ | I need `CREATE_INSTANT_INVITE` permission");
+        fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
+            method: "POST",
+            body: JSON.stringify({
+                max_age: 86400,
+                max_uses: 0,
+                target_application_id: "832012586023256104", // chess together
+                target_type: 2,
+                temporary: false,
+                validate: null
+            }),
+            headers: {
+                "Authorization": `Bot ${client.token}`,
+                "Content-Type": "application/json"
+            }
+        }).then(response => response.json()).then(data => {
+            if (data.code == 50035) {
+                return message.channel.send("❌ | Missing permission: `CREATE_INSTANT_INVITE`")
+            } else {
+                return message.channel.send(`✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}`);
+            }
         }).catch(e => {
             message.channel.send("❌ | Could not start **Fishington.io**!");
         })
