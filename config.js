@@ -1,6 +1,6 @@
 module.exports = new (require("./types/Config"))({
   // Liste haline bot için kullanılacak ön-ek/preifxler
-  prefixes: ["!"],
+  prefixes: ["!", ">"],
   // E tabi, bot tokeni buraya.
   clientToken: "TOKEN",
   // Yasaklı kullanıcıların idleri.
