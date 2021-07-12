@@ -1,207 +1,226 @@
-const Discord = require('discord.js');
-const client = new Discord.Client();
-const fetch = require("node-fetch");
-const prefix = '-';
-require('dotenv').config()
+const config = require("./config");
+const { plsParseArgs } = require("plsargs");
+const Discord = require("discord.js");
+const chillout = require("chillout");
+const path = require("path");
+const readdirRecursive = require("recursive-readdir");
+const { makeSureFolderExists } = require("stuffs");
+const Command = require("./types/Command");
+const client = new Discord.Client(config.clientOptions);
 
-const helpembed = new Discord.MessageEmbed()
-    .setColor('#ffc83d')
-    .setTitle('Youtube Together')
-    .setURL('https://github.com/Nooraje/Youtube-Together')
-    .setDescription("Watch youtube together, fish with your friends and even play among us!")
-    .setThumbnail('https://www.sehertunali.com/wp-content/uploads/2018/12/youtube-logo.png')
-    .setImage('https://cdn.discordapp.com/attachments/852604736715882496/857860923545092146/unknown.png')
-    .setFooter('YouTube With Friends © 2021 Google LLC', 'https://www.sehertunali.com/wp-content/uploads/2018/12/youtube-logo.png')
-    .addField("So here's my things", "```Misc```****-help**** *get some help*\n****-invite**** *invite my bot*\n\
-    ```Activities```****-w2g**** *Watch some youtube with your friend!*\n****-poker**** *Play some poker with your friend!*\n****-betrayal**** *Wanna play among us from discord?*\n****-fishing**** *Catch some fish with your friend!*\n****-chess**** *How about playing chess with your friends?*\n", true);
+require('discord-buttons')(client);
 
-client.on('ready', () => {
-    console.log(`Watch2Gether : Logged in as ${client.user.tag}`);
-    setInterval(function () {
-        client.user.setActivity("-w2g", {
-            type: "WATCHING"
+global.commands = new Discord.Collection();
+global.events = new Discord.Collection();
+global.config = config;
+global.client = client;
+
+console.info("[BİLGİ] Youtube Together - by Nora");
+(async () => {
+  let commandsPath = path.resolve("./commands");
+  await makeSureFolderExists(commandsPath);
+  let eventsPath = path.resolve("./events");
+  await makeSureFolderExists(eventsPath);
+
+  config.onBeforeLoad(client);
+
+  let loadStart = Date.now();
+  let commandFiles = await readdirRecursive(commandsPath);
+
+  await chillout.forEach(commandFiles, (commandFile) => {
+    let start = Date.now();
+    console.info(`[INFO] "${commandFile}" command is loading.`)
+    /** @type {import("./types/Command")} */
+    let command = require(commandFile);
+
+    if (typeof command.name != "string") command.name = path.basename(commandFile).slice(0, -3).replace(/ /g, "");
+    if (!command.aliases.includes(command.name)) command.aliases.unshift(command.name);
+
+    if (global.commands.has(command.name)) {
+      console.warn(`[WARNING] Command named "${command.name}" has already been installed. It's skipping.`)
+      return;
+    }
+
+    if (typeof command.onCommand != "function") {
+      console.error(`[ERROR] Command "${command.name}" does not have a valid onCommand function! It's skipping.`);
+      return;
+    };
+
+    if (!command.guildOnly && (command.perms.bot.length != 0 || command.perms.user.length != 0)) {
+      console.warn(`[WARNING] command "${command.name}" is not server specific but uses custom perm.`);
+    }
+
+    global.commands.set(command.name, command);
+    command.onLoad(client);
+    console.info(`[INFO] The command "${command.name}" has been loaded. (It took ${Date.now() - start}ms.)`);
+  });
+
+  if (global.commands.size) {
+    console.info(`[INFO] ${global.commands.size} command loaded.`);
+  } else {
+    console.warn(`[WARNING] No commands loaded, is everything ok?`);
+  }
+
+  let eventFiles = await readdirRecursive(eventsPath);
+  await chillout.forEach(eventFiles, async (eventFile) => {
+    let start = Date.now();
+    console.info(`[INFO] Loading event "${eventFile}"..`);
+
+    /** @type {import("./types/Event")} */
+    let event = require(eventFile);
+
+    if (typeof event.name != "string") event.name = path.basename(eventFile).slice(0, -3).replace(/ /g, "");
+
+    if (global.events.has(event.name)) {
+      console.warn(`[WARNING] Event named "${event.name}" has already been loaded. It's skipping.`);
+      return;
+    }
+
+    if (typeof event.onEvent != "function") {
+      console.error(`[ERROR] Event named "${event.name}" does not have a valid onEvent function! It's skipping.`);
+      return;
+    };
+
+    global.events.set(event.name, event);
+    event.onLoad(client);
+    console.info(`[INFO] Event named "${event.name}" has been loaded. (It took ${Date.now() - start}ms.)`);
+  })
+
+  if (global.events.size) {
+    console.info(`[INFO] ${global.events.size} event loaded.`);
+  } else {
+    console.warn(`[INFO] No events loaded, is everything ok?`);
+  }
+
+  client.on("message", async (message) => {
+    if (message.author.id == client.user.id) return;
+
+    let usedPrefix = "";
+    let usedAlias = "";
+    let content = message.content;
+
+    await chillout.forEach(config.prefixes, (p) => {
+      if (content.slice(0, p.length).toLowerCase() == p.toLowerCase()) {
+        usedPrefix = p;
+        usedAlias = content.slice(p.length).trim().split(" ", 2)[0];
+        return chillout.StopIteration;
+      }
+    });
+
+    if (!usedPrefix || !usedAlias) return;
+    let lowerUsedAlias = usedAlias.toLowerCase();
+    let args = content.trim().split(" ");
+    let plsargs = plsParseArgs(args);
+
+    chillout.forEach(
+      global.commands.array(),
+      /**
+       * @param {Command} command
+       */
+      (command) => {
+        if (!command.aliases.some(i => i.toLowerCase() == lowerUsedAlias)) return;
+
+        if (command.developerOnly && !config.developers.has(message.author.id)) {
+          config.messages.developerOnly(message, command);
+          return chillout.StopIteration;
+        }
+
+        if (config.blockedUsers.has(message.author.id)) {
+          config.messages.blocked(message, command);
+          return chillout.StopIteration;
+        }
+
+        if (command.guildOnly && message.channel.type == "dm") {
+          config.messages.guildOnly(message, command);
+          return chillout.StopIteration;
+        }
+
+        if (command.disabled) {
+          config.messages.disabled(message, command);
+          return chillout.StopIteration;
+        }
+
+        let userCooldown = command.coolDowns.get(message.author.id) || 0;
+        if (Date.now() < userCooldown) {
+          config.messages.coolDown(message, command, userCooldown - Date.now());
+          return chillout.StopIteration;
+        }
+
+        function setCoolDown(duration = 0) {
+          if (typeof duration == "number" && duration > 0) {
+            return command.coolDowns.set(message.author.id, Date.now() + duration);
+          } else {
+            return command.coolDowns.delete(message.author.id);
+          }
+        }
+
+        if (command.coolDown > 0) {
+          setCoolDown(command.coolDown);
+        }
+
+        if (command.guildOnly && command.perms.bot.length != 0 && !command.perms.bot.every(perm => message.guild.me.permissions.has(perm))) {
+          config.messages.botPermsRequired(message, command, command.perms.bot);
+          return chillout.StopIteration;
+        }
+
+        if (command.guildOnly && command.perms.user.length != 0 && !command.perms.user.every(perm => message.member.permissions.has(perm))) {
+          config.messages.userPermsRequired(message, command, command.perms.user);
+          return chillout.StopIteration;
+        }
+
+        command.onCommand(message, {
+          args, plsargs, usedPrefix, usedAlias,
+          setCoolDown
+        })
+
+        return chillout.StopIteration;
+      }
+    );
+  })
+
+  {
+    /** @type {Map<string, (import("./types/Event"))[]>} */
+    let eventsMapped = global.events.array().reduce((all, cur) => {
+      if (!all.has(cur.eventName)) all.set(cur.eventName, []);
+      all.get(cur.eventName).push(cur);
+      return all;
+    }, new Map());
+
+    await chillout.forEach(
+      Array.from(eventsMapped.entries()),
+      /**
+       * @param {[string, (import("./types/Event"))[]>]} param0
+       */
+      ([eventName, events]) => {
+        console.info(`[INFO] ${events.length} listener loaded for event "${eventName}"!`);
+        client.on(eventName, (...args) => {
+          chillout.forEach(events, (event) => {
+            if (!event.disabled) {
+              event.onEvent(...args);
+            }
+          });
         });
-    }, 3600000);
-});
+      }
+    )
+  }
 
-client.on('message', async message => {
-    if (message.author.bot) return;
-    if (message.content.indexOf(prefix) !== 0) return;
+  console.info(`[INFO] Everything loaded in ${Date.now() - loadStart}ms!`);
 
-    var args = message.content.match(/[^_\W]+/g);
-    args = (args == null) ? "" : args.join(' ').toLowerCase().trim().split(/ +/g);
-    var cmd = (args != "" && message.content.charAt(0) === prefix) ? args.shift() : false;
-    if (cmd === `w2g`) {
-	const channel = message.mentions.channels.first() || message.guild.channels.cache.get(args[0]);
-        if (!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
-	if (!message.member.voice.channel.permissionsFor(message.guild.me).has("CREATE_INSTANT_INVITE")) return message.channel.send("❌ | I need `CREATE_INSTANT_INVITE` permission");
-        fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
-            method: "POST",
-            body: JSON.stringify({
-                max_age: 86400,
-                max_uses: 0,
-                target_application_id: "755600276941176913", // youtube together
-                target_type: 2,
-                temporary: false,
-                validate: null
-            }),
-            headers: {
-                "Authorization": `Bot ${client.token}`,
-                "Content-Type": "application/json"
-            }
-        }).then(response => response.json()).then(data => {
-	    if(data.code == 50035) {
-		    return message.channel.send("❌ | Missing permission: `CREATE_INSTANT_INVITE`")
-	    } else {
-	            return message.channel.send(`✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}`);
-	    }
-        }).catch(e => {
-            message.channel.send("❌ | Could not start **YouTube Together**!");
-        })
-    }
+  client.on("guildDelete", guild => {
+    var now = new Date();
+    client.channels.cache.get(`835899096493195274`).send(`${new Date(now)} | Left a guild: ` + guild.name + " | " + guild.memberCount)
+  })
 
-    if (cmd === `poker`) {
-	const channel = message.mentions.channels.first() || message.guild.channels.cache.get(args[0]);
-        if (!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
-	if (!message.member.voice.channel.permissionsFor(message.guild.me).has("CREATE_INSTANT_INVITE")) return message.channel.send("❌ | I need `CREATE_INSTANT_INVITE` permission");
-        fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
-            method: "POST",
-            body: JSON.stringify({
-                max_age: 86400,
-                max_uses: 0,
-                target_application_id: "755827207812677713", // poker together
-                target_type: 2,
-                temporary: false,
-                validate: null
-            }),
-            headers: {
-                "Authorization": `Bot ${client.token}`,
-                "Content-Type": "application/json"
-            }
-        }).then(response => response.json()).then(data => {
-	    if(data.code == 50035) {
-		    return message.channel.send("❌ | Missing permission: `CREATE_INSTANT_INVITE`")
-	    } else {
-	            return message.channel.send(`✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}`);
-	    }
-        }).catch(e => {
-            message.channel.send("❌ | Could not start **Poker Night**!");
-        })
-    }
+  commandFiles = 0;
+  eventFiles = 0;
+  loadStart = 0;
 
-    if (cmd === `betrayal`) {
-	const channel = message.mentions.channels.first() || message.guild.channels.cache.get(args[0]);
-        if (!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
-	if (!message.member.voice.channel.permissionsFor(message.guild.me).has("CREATE_INSTANT_INVITE")) return message.channel.send("❌ | I need `CREATE_INSTANT_INVITE` permission");
-        fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
-            method: "POST",
-            body: JSON.stringify({
-                max_age: 86400,
-                max_uses: 0,
-                target_application_id: "773336526917861400", // betrayal together
-                target_type: 2,
-                temporary: false,
-                validate: null
-            }),
-            headers: {
-                "Authorization": `Bot ${client.token}`,
-                "Content-Type": "application/json"
-            }
-        }).then(response => response.json()).then(data => {
-	    if(data.code == 50035) {
-		    return message.channel.send("❌ | Missing permission: `CREATE_INSTANT_INVITE`")
-	    } else {
-	            return message.channel.send(`✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}`);
-	    }
-        }).catch(e => {
-            message.channel.send("❌ | Could not start **Betrayal.io**!");
-        })
-    }
+  config.onAfterLoad(client);
 
-    if (cmd === `fishing`) {
-	const channel = message.mentions.channels.first() || message.guild.channels.cache.get(args[0]);
-        if (!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
-	if (!message.member.voice.channel.permissionsFor(message.guild.me).has("CREATE_INSTANT_INVITE")) return message.channel.send("❌ | I need `CREATE_INSTANT_INVITE` permission");
-        fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
-            method: "POST",
-            body: JSON.stringify({
-                max_age: 86400,
-                max_uses: 0,
-                target_application_id: "814288819477020702", // fishing together
-                target_type: 2,
-                temporary: false,
-                validate: null
-            }),
-            headers: {
-                "Authorization": `Bot ${client.token}`,
-                "Content-Type": "application/json"
-            }
-        }).then(response => response.json()).then(data => {
-	    if(data.code == 50035) {
-		    return message.channel.send("❌ | Missing permission: `CREATE_INSTANT_INVITE`")
-	    } else {
-	            return message.channel.send(`✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}`);
-	    }
-        }).catch(e => {
-            message.channel.send("❌ | Could not start **Fishington.io**!");
-        })
-    }
-	
-    if (cmd === `chess`) {
-        const channel = message.mentions.channels.first() || message.guild.channels.cache.get(args[0]);
-        if (!message.member.voice.channel) return message.channel.send("To use this command, you must join a voice channel.")
-        if (!message.member.voice.channel.permissionsFor(message.guild.me).has("CREATE_INSTANT_INVITE")) return message.channel.send("❌ | I need `CREATE_INSTANT_INVITE` permission");
-        fetch(`https://discord.com/api/v8/channels/${message.member.voice.channelID}/invites`, {
-            method: "POST",
-            body: JSON.stringify({
-                max_age: 86400,
-                max_uses: 0,
-                target_application_id: "832012586023256104", // chess together
-                target_type: 2,
-                temporary: false,
-                validate: null
-            }),
-            headers: {
-                "Authorization": `Bot ${client.token}`,
-                "Content-Type": "application/json"
-            }
-        }).then(response => response.json()).then(data => {
-            if (data.code == 50035) {
-                return message.channel.send("❌ | Missing permission: `CREATE_INSTANT_INVITE`")
-            } else {
-                return message.channel.send(`✅ **Party created!**\nℹ️ Use the Referral link to join the party and invite your friends.\n\nReferral Link: https://discord.gg/${data.code}`);
-            }
-        }).catch(e => {
-            message.channel.send("❌ | Could not start **Fishington.io**!");
-        })
-    }
+  await client.login(config.clientToken);
+  console.info("[INFO] Connected to Discord!", client.user.tag);
+  config.onReady(client);
+})();
 
-    if (cmd === `help`) {
-	const channel = message.mentions.channels.first() || message.guild.channels.cache.get(args[0]);
-	if (!message.channel.permissionsFor(message.guild.me).has("EMBED_LINKS")) return message.channel.send("❌ | I need `EMBED_LINKS` permission");
-        message.channel.send(helpembed)
-    }
 
-    if (cmd === `invite`) {
-        message.channel.send("https://discord.com/oauth2/authorize?client_id=831408659262472222&scope=bot&permissions=16385")
-    }
 
-    if (cmd === `stats`) {
-        guildcount = client.guilds.cache.size
-        membercount = message.client.guilds.cache.map((g) => g.memberCount).reduce((a, c) => a + c)
-        channelcount = client.channels.cache.size
-        const statsembed = new Discord.MessageEmbed()
-            .setColor('#ffc83d')
-            .setTitle('Youtube Together')
-            .setURL('https://github.com/Nooraje/Youtube-Together')
-            .addFields(
-                { name: 'Guilds', value: guildcount, inline: true },
-                { name: 'Users', value: membercount, inline: true },
-                { name: 'Channels', value: channelcount, inline: true },
-            )
-            .setFooter('YouTube With Friends © 2021 Google LLC', 'https://www.sehertunali.com/wp-content/uploads/2018/12/youtube-logo.png')
-
-        message.channel.send(statsembed)
-    }
-});
-client.login(process.env.DISCORD_TOKEN);
