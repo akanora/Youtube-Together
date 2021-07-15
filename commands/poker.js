@@ -3,7 +3,7 @@ const disbut = require('discord-buttons');
 client.discordTogether = new DiscordTogether(client);
 
 module.exports = new (require("../types/Command"))({
-    desc: "Play poker with your friend!",
+    desc: "Play poker with your friends!",
     async onCommand(msg, { args, usedPrefix, usedAlias }) {
         if (!msg.member.voice.channel) return msg.channel.send("To use this command, you must join a voice channel.")
         client.discordTogether.createTogetherCode(msg.member.voice.channelID, 'poker').then(async invite => {
