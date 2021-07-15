@@ -3,7 +3,7 @@ const disbut = require('discord-buttons');
 client.discordTogether = new DiscordTogether(client);
 
 module.exports = new (require("../types/Command"))({
-    desc: "Wanna play among us true discord?",
+    desc: "Wanna play among us through discord?",
     async onCommand(msg, { args, usedPrefix, usedAlias }) {
         if (!msg.member.voice.channel) return msg.channel.send("To use this command, you must join a voice channel.")
         client.discordTogether.createTogetherCode(msg.member.voice.channelID, 'betrayal').then(async invite => {
