@@ -217,7 +217,7 @@ console.info("[BİLGİ] Youtube Together - by Nora");
 
   config.onAfterLoad(client);
 
-  await client.login(process.env.token);
+  await client.login(config.clientToken);
   console.info("[INFO] Connected to Discord!", client.user.tag);
   config.onReady(client);
 })();
