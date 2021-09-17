@@ -1,5 +1,8 @@
 class Event {
 
+  /** @private */
+  _type = "event";
+  
   /** @type {string} */
   name = "";
 
@@ -10,7 +13,7 @@ class Event {
    * @param  {...any} args 
    */
   onEvent(...args) {
-
+    
   }
 
   /**
@@ -23,7 +26,7 @@ class Event {
   disabled = false;
 
   /**
-   * @param {Event} arg
+   * @param {Omit<Event, "_type" >} arg
    */
   constructor(arg) {
     this.name = arg.name;

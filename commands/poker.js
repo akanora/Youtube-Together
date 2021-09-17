@@ -1,12 +1,12 @@
+const { MessageEmbed } = require("discord.js")
 const { DiscordTogether } = require('discord-together');
 const disbut = require('discord-buttons');
-client.discordTogether = new DiscordTogether(client);
+Underline.client.discordTogether = new DiscordTogether(Underline.client);
 
-module.exports = new (require("../types/Command"))({
-    desc: "Play poker with your friends!",
-    async onCommand(msg, { args, usedPrefix, usedAlias }) {
+module.exports = new Underline.Command({
+  async onCommand(msg, { client, args, usedPrefix, usedAlias }) {
         if (!msg.member.voice.channel) return msg.channel.send("To use this command, you must join a voice channel.")
-        client.discordTogether.createTogetherCode(msg.member.voice.channelID, 'poker').then(async invite => {
+        Underline.client.discordTogether.createTogetherCode(msg.member.voice.channelID, 'poker').then(async invite => {
             let button1 = new disbut.MessageButton()
                 .setStyle('url')
                 .setURL(`${invite.code}`)
@@ -19,12 +19,17 @@ module.exports = new (require("../types/Command"))({
                 .addComponents([button1, button2])
             return msg.channel.send('Here is your activity!', row);
         });
-    },
-    coolDown: 2000,
+  },
+  other: {
+    usage: "{p}{alias} [komut-ismi]"
+  },
+  desc: "Poker Stable Version.",
+  coolDown: 2000,
     perms: {
         // Komutun çalışması için bot'a gerekli olan yetkiler.
         bot: ["CREATE_INSTANT_INVITE"],
         // Komutun çalışması için kullanıcıya gerekli olan yetkiler.
         user: []
-    }
+    },
+  guildOnly: false
 })

@@ -6,11 +6,11 @@ Underline.client.discordTogether = new DiscordTogether(Underline.client);
 module.exports = new Underline.Command({
   async onCommand(msg, { client, args, usedPrefix, usedAlias }) {
         if (!msg.member.voice.channel) return msg.channel.send("To use this command, you must join a voice channel.")
-        Underline.client.discordTogether.createTogetherCode(msg.member.voice.channel.id, 'chess').then(async invite => {
+        Underline.client.discordTogether.createTogetherCode(msg.member.voice.channelID, 'chessdev').then(async invite => {
             let button1 = new disbut.MessageButton()
                 .setStyle('url')
                 .setURL(`${invite.code}`)
-                .setLabel('Chess!');
+                .setLabel('Chess Dev!');
             let button2 = new disbut.MessageButton()
                 .setStyle('url')
                 .setURL('https://top.gg/bot/831408659262472222/vote')
@@ -23,7 +23,7 @@ module.exports = new Underline.Command({
   other: {
     usage: "{p}{alias} [komut-ismi]"
   },
-  desc: "Chess Stable Version.",
+  desc: "Chess Dev Version.",
   coolDown: 2000,
     perms: {
         // Komutun çalışması için bot'a gerekli olan yetkiler.
