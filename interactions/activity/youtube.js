@@ -1,7 +1,7 @@
 const { MessageActionRow, MessageButton } = require('discord.js');
 
-module.exports = new Underline.SlashSubCommand({
-    name: "activity",
+module.exports = new Underline.SlashCommand({
+    name: ["activity", "youtube"],
     subName: "youtube",
     description: "Youtube Stable Version.",
     async onInteraction(interaction, other) {

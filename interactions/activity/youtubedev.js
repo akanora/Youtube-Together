@@ -1,8 +1,7 @@
 const { MessageActionRow, MessageButton } = require('discord.js');
 
-module.exports = new Underline.SlashSubCommand({
-    name: "activity",
-    subName: "youtubedev",
+module.exports = new Underline.SlashCommand({
+    name: ["activity", "youtubedev"],
     description: "Youtube Developer Version",
     async onInteraction(interaction, other) {
         if (!interaction.member.voice.channel) return interaction.reply("To use this command, you must join a voice channel.")

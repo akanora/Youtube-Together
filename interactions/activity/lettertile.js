@@ -1,7 +1,7 @@
 const { MessageActionRow, MessageButton } = require('discord.js');
 
-module.exports = new Underline.SlashSubCommand({
-    name: "activity",
+module.exports = new Underline.SlashCommand({
+    name: ["activity", "lettertile"],
     subName: "lettertile",
     description: "Letter Tile Crew Stable Version.",
     async onInteraction(interaction, other) {

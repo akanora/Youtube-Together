@@ -16,17 +16,16 @@ const events = new Discord.Collection();
 globalThis.Underline = {
   config,
   client,
-  interactions: interactions,
-  events: events,
+  interactions,
+  events,
   Interaction: require('./types/Interaction'),
   Event: require('./types/Event'),
   SlashCommand: require("./types/SlashCommand"),
-  SlashSubCommand: require("./types/SlashSubCommand"),
   MessageAction: require("./types/MessageAction"),
   UserAction: require("./types/UserAction"),
 }
 
-console.info("[INFO] Simple Activity Bot.");
+console.info("[BİLGİ] Basit Altyapı v1.8.3 - by Kıraç Armağan Önal");
 (async () => {
   let interactionsPath = path.resolve("./interactions");
   await makeSureFolderExists(interactionsPath);
@@ -40,189 +39,194 @@ console.info("[INFO] Simple Activity Bot.");
 
   interactionFiles = interactionFiles.filter(i => {
     let state = path.basename(i).startsWith("-");
-    if (state) console.warn(`[WARNING] The file "${i}" is unlisted because it starts with a hyphen.`);
+    if (state) console.warn(`[UYARI] "${i}" dosyası tire ile başladığı için liste dışı bırakıldı.`);
     return !state;
   });
-
+  
   await chillout.forEach(interactionFiles, (interactionFile) => {
     let start = Date.now();
     let rltPath = path.relative(__dirname, interactionFile);
-    console.info(`[INFO] Loading interaction at "${interactionFile}"..`)
+    console.info(`[BİLGİ] "${interactionFile}" konumundaki interaksiyon yükleniyor..`)
     /** @type {import("./types/Interaction")} */
-    let interactionData = require(interactionFile);
+    let uInter = require(interactionFile);
 
-    if (interactionData?._type != "interaction") {
-      console.warn(`[WARNING] The interaction file "${rltPath}" is empty. Skipping..`);
+    if (uInter?._type != "interaction") {
+      console.warn(`[UYARI] "${rltPath}" interaksiyon dosyası boş. Atlanıyor..`);
       return;
     }
 
-    if (!interactionData.type) {
-      console.warn(`[WARNING] A type is not specified for your interaction file "${rltPath}". It is skipping.`);
+    if (!uInter.id) {
+      console.warn(`[UYARI] "${rltPath}" interaksiyon dosyasının bir idsi bulunmuyor. Atlanıyor..`);
       return;
     }
 
-    if (!interactionData.id) {
-      console.warn(`[WARNING] The interaction file "${rltPath}" does not have an id. Skipping..`);
+    if (uInter.name.length > 3) {
+      console.warn(`[UYARI] "${rltPath}" interaksiyon dosyasının isim listesi çok uzun. (>3) Atlanıyor..`);
       return;
     }
 
-    if (typeof interactionData.name != "string") {
-      console.warn(`[WARNING] The interaction file "${rltPath}" does not have a name. Skipping..`);
-      return;
-    }
-    if (interactionData.actionType == "CHAT_INPUT") interactionData.name = interactionData.name.replace(/ /g, "").toLowerCase();
-
-    if (typeof interactionData.type == "SUB_COMMAND" && !interactionData.subName) {
-      console.warn(`[WARNING] The interaction file "${rltPath}" is of type "SUB_COMMAND" but does not contain a subName. Skipping..`);
+    if (!uInter.name?.length) {
+      console.warn(`[UYARI] "${rltPath}" interaksiyon dosyasının bir ismi bulunmuyor. Atlanıyor..`);
       return;
     }
 
-
-    if (Underline.interactions.has(interactionData.id)) {
-      console.warn(`[WARNING] An interaction with id "${interactionData.id}" is already installed. It is skipping.`)
+    if (Underline.interactions.has(uInter.id)) {
+      console.warn(`[UYARI] "${uInter.id}" idli bir interaksiyon daha önceden zaten yüklenmiş. Atlanıyor.`)
       return;
     }
 
-    if (typeof interactionData.onInteraction != "function") {
-      console.error(`[ERROR] Interaction file "${rltPath}" does not have a valid onInteraction! It is skipping.`);
+    if (typeof uInter.onInteraction != "function") {
+      console.error(`[HATA] "${rltPath}" interaksiyon dosyası geçerli bir onInteraction fonksiyonuna sahip değil! Atlanıyor.`);
       return;
     };
 
-    if (!interactionData.guildOnly && (interactionData.perms.bot.length != 0 || interactionData.perms.user.length != 0)) {
-      console.warn(`[WARNING] The interaction file "${rltPath}" is not server specific but uses custom perm.`);
+    if (!uInter.guildOnly && (uInter.perms.bot.length != 0 || uInter.perms.user.length != 0)) {
+      console.warn(`[UYARI] "${rltPath}" interaksiyon dosyası sunuculara özel olmamasına rağmen özel perm kullanıyor.`);
     }
 
 
-    Underline.interactions.set(interactionData.id, interactionData);
-    interactionData.onLoad(client);
-    console.info(`[INFO] "/${interactionData.name}${interactionData.subName ? ` ${interactionData.subName}` : ""}" (${interactionData.id}) named interaction loaded. (${Date.now() - start}ms.)`);
+    Underline.interactions.set(uInter.id, uInter);
+    uInter.onLoad(client);
+    console.info(`[BİLGİ] "${uInter.actionType == "CHAT_INPUT" ? `/${uInter.name.join(" ")}` : `${uInter.name[0]}`}" (${uInter.id}) adlı interaksiyon yüklendi. (${Date.now() - start}ms sürdü.)`);
   });
 
   if (Underline.interactions.size) {
-    console.info(`[INFO] ${Underline.interactions.size} interaction loaded.`);
+    console.info(`[BİLGİ] ${Underline.interactions.size} interaksiyon yüklendi.`);
   } else {
-    console.warn(`[WARNING] No interactions loaded, is everything ok?`);
+    console.warn(`[UYARI] Hiçbir interaksiyon yüklenmedi, herşey yolunda mı?`);
   }
 
   let eventFiles = await readdirRecursive(eventsPath);
 
   eventFiles = eventFiles.filter(i => {
     let state = path.basename(i).startsWith("-");
-    if (state) console.warn(`[WARNING] The file "${i}" is unlisted because it starts with a hyphen.`);
+    if (state) console.warn(`[UYARI] "${i}" dosyası tire ile başladığı için liste dışı bırakıldı.`);
     return !state;
   });
 
   await chillout.forEach(eventFiles, async (eventFile) => {
     let start = Date.now();
     let rltPath = path.relative(__dirname, eventFile);
-    console.info(`[INFO] Loading event "${eventFile}"..`);
+    console.info(`[BİLGİ] "${eventFile}" event yükleniyor..`);
 
     /** @type {import("./types/Event")} */
     let event = require(eventFile);
 
     if (event?._type != "event") {
-      console.warn(`[WARNING] The event file "${rltPath}" is empty. Skipping....`);
+      console.warn(`[UYARI] "${rltPath}" event dosyası boş. Atlanıyor..`);
       return;
     }
 
     if (typeof event.id != "string") event.id = path.basename(eventFile).slice(0, -3).replace(/ /g, "");
 
     if (Underline.events.has(event.id)) {
-      console.warn(`[WARNING] An event named "${event.id}" has already been loaded. It's skipping.`);
+      console.warn(`[UYARI] "${event.id}" adlı bir event daha önceden zaten yüklenmiş. Atlanıyor.`);
       return;
     }
 
     if (typeof event.onEvent != "function") {
-      console.error(`[ERROR] Event file "${rltPath}" does not have a valid onEvent function! It's skipping.`);
+      console.error(`[HATA] "${rltPath}" olay dosyası geçerli bir onEvent fonksiyonuna sahip değil! Atlanıyor.`);
       return;
     };
 
     Underline.events.set(event.id, event);
     event.onLoad(client);
-    console.info(`[INFO] ("${rltPath}") The event "${event.id}" has been loaded. (It took ${Date.now() - start}ms.)`);
+    console.info(`[BİLGİ] ("${rltPath}") "${event.id}" adlı event yüklendi. (${Date.now() - start}ms sürdü.)`);
   })
 
   if (Underline.events.size) {
-    console.info(`[INFO] The ${Underline.events.size} event has been loaded.`);
+    console.info(`[BİLGİ] ${Underline.events.size} event yüklendi.`);
   } else {
-    console.warn(`[WARNING] No events loaded, is everything ok?`);
+    console.warn(`[UYARI] Hiçbir olay yüklenmedi, herşey yolunda mı?`);
   }
 
   client.on("interactionCreate", async (interaction) => {
     if (!(interaction.isCommand() || interaction.isContextMenu())) return;
+    
+    let subCommandName = "";
+    try {subCommandName = interaction.options.getSubcommand();} catch { };
+    let subCommandGroupName = "";
+    try {subCommandGroupName = interaction.options.getSubcommandGroup();} catch { };
 
-    let command = Underline.interactions.find(cmd => {
-      if (cmd.type == "SUB_COMMAND") {
-        return cmd.name == interaction.commandName && cmd.subName == interaction.options.getSubcommand();
-      } else if (cmd.type == "COMMAND") {
-        return cmd.name == interaction.commandName;
+    let uInter = Underline.interactions.find(uInter => {
+      switch (uInter.name.length) {
+        case 1: return uInter.name[0] == interaction.commandName;
+        case 2: return uInter.name[0] == interaction.commandName && uInter.name[1] == subCommandName;
+        case 3: return uInter.name[0] == interaction.commandName && uInter.name[1] == subCommandGroupName && uInter.name[2] == subCommandName;
       }
     });
 
-    if (!command) return;
+    if (!uInter) return;
 
-    if (config.autoDefer) interaction.defer();
+    let other = {};
 
-    let shouldRun1 = await config.onInteractionBeforeChecks(command, interaction);
+    let shouldRun1 = await config.onInteractionBeforeChecks(uInter, interaction, other);
 
     if (!shouldRun1) return;
 
-    if (command.developerOnly && !config.developers.has(interaction.user.id)) {
-      config.userErrors.developerOnly(interaction, command);
+    if (uInter.developerOnly && !config.developers.has(interaction.user.id)) {
+      config.userErrors.developerOnly(interaction, uInter, other);
       return;
     }
 
-    if (command.disabled) {
-      config.userErrors.disabled(interaction, command);
+    if (uInter.disabled) {
+      config.userErrors.disabled(interaction, uInter, other);
       return;
     }
 
     if (config.blockedUsers.has(interaction.user.id)) {
-      config.userErrors.blocked(interaction, command);
+      config.userErrors.blocked(interaction, uInter, other);
       return;
     }
 
-    if (command.guildOnly && interaction.channel.type == "dm") {
-      config.userErrors.guildOnly(interaction, command);
+    if (uInter.guildOnly && !interaction.guildId) {
+      config.userErrors.guildOnly(interaction, uInter, other);
       return;
     }
 
-
-    let other = {};
-
-    let userCooldown = command.coolDowns.get(interaction.user.id) || 0;
+    let userCooldown = uInter.coolDowns.get(interaction.user.id) || 0;
     if (Date.now() < userCooldown) {
-      config.userErrors.coolDown(interaction, command, userCooldown - Date.now());
+      config.userErrors.coolDown(interaction, uInter, userCooldown - Date.now(), other);
       return;
     }
 
     function setCoolDown(duration = 0) {
       if (typeof duration == "number" && duration > 0) {
-        return command.coolDowns.set(interaction.user.id, Date.now() + duration);
+        return uInter.coolDowns.set(interaction.user.id, Date.now() + duration);
       } else {
-        return command.coolDowns.delete(interaction.user.id);
+        return uInter.coolDowns.delete(interaction.user.id);
       }
     }
     other.setCoolDown = setCoolDown;
 
-    if (command.coolDown > 0) {
-      setCoolDown(command.coolDown);
+    if (uInter.coolDown > 0) {
+      setCoolDown(uInter.coolDown);
     }
 
-    if (command.guildOnly && command.perms.bot.length != 0 && !command.perms.bot.every(perm => interaction.guild.me.permissions.has(perm))) {
-      config.userErrors.botPermsRequired(interaction, command, command.perms.bot);
+    if (uInter.guildOnly && uInter.perms.bot.length != 0 && !uInter.perms.bot.every(perm => interaction.guild.me.permissions.has(perm))) {
+      config.userErrors.botPermsRequired(interaction, uInter, uInter.perms.bot, other);
       return;
     }
 
-    if (command.guildOnly && command.perms.user.length != 0 && !command.perms.user.every(perm => interaction.member.permissions.has(perm))) {
-      config.userErrors.userPermsRequired(interaction, command, command.perms.user);
+    if (uInter.guildOnly && uInter.perms.user.length != 0 && !uInter.perms.user.every(perm => interaction.member.permissions.has(perm))) {
+      config.userErrors.userPermsRequired(interaction, uInter, uInter.perms.user, other);
       return;
     }
 
     (async () => {
-      let shouldRun2 = await config.onInteraction(command, interaction, other);
+      let shouldRun2 = await config.onInteraction(uInter, interaction, other);
       if (!shouldRun2) return;
-      await command.onInteraction(interaction, other);
+      try {
+        await uInter.onInteraction(interaction, other);
+      } catch (err) {
+        console.error(`[HATA] "${uInter.actionType == "CHAT_INPUT" ? `/${uInter.name.join(" ")}` : `${uInter.name[0]}`}" adlı interaksiyon çalıştırılırken bir hata ile karşılaşıldı!`)
+        if (err.message) console.error(`[HATA] ${err.message}`);
+        if (err.stack) {
+          `${err.stack}`.split("\n").forEach((line) => {
+            console.error(`[HATA] ${line}`);
+          });
+        }
+      }
     })();
 
     return;
@@ -242,7 +246,7 @@ console.info("[INFO] Simple Activity Bot.");
        * @param {[string, (import("./types/Event"))[]>]} param0
        */
       ([eventName, events]) => {
-        console.info(`[INFO] ${events.length} listener loaded for event "${eventName}"!`);
+        console.info(`[BİLGİ] Event "${eventName}" için ${events.length} dinleyici yüklendi!`);
         client.on(eventName, (...args) => {
           setTimeout(() => {
             chillout.forEach(events, (event) => {
@@ -250,13 +254,13 @@ console.info("[INFO] Simple Activity Bot.");
                 event.onEvent(...args);
               }
             });
-          }, 0)
+          },0)
         });
       }
     )
   }
 
-  console.info(`[INFO] Everything loaded in ${Date.now() - loadStart}ms!`);
+  console.info(`[BİLGİ] Herşey ${Date.now() - loadStart}ms içerisinde yüklendi!`);
 
   interactionFiles = 0;
   eventFiles = 0;
@@ -265,9 +269,10 @@ console.info("[INFO] Simple Activity Bot.");
   await config.onAfterLoad(client);
 
   await client.login(config.clientToken);
-  console.info("[INFO] Connected to Discord!", client.user.tag);
+  console.info("[BİLGİ] Discord'a bağlanıldı!", client.user.tag);
 
   config.onReady(client);
 })();
+
 
 
