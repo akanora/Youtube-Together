@@ -8,7 +8,7 @@ https://discord.com/api/oauth2/authorize?client_id=831408659262472222&permission
 
 # Example Usage
 
-https://imgur.com/IndEaTB
+https://i.imgur.com/AVmTSUH.gif
 
 Contact
 
