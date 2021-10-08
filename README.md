@@ -16,7 +16,7 @@ Discord: Nora#1768
 
 ## Installation
 
-Youtube-Together requires Node.js v14.17.0+
+Youtube-Together requires Node.js v16.6.1+
 
 ```sh
 npm install -g yarn
