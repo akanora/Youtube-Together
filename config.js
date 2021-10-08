@@ -1,116 +1,96 @@
 module.exports = new (require("./types/Config"))({
-  // Liste haline bot için kullanılacak ön-ek/preifxler
-  prefixes: ["-"],
-  // E tabi, bot tokeni buraya.
-  clientToken: "token",
-  // Yasaklı kullanıcıların idleri.
-  blockedUsers: new Set([
-
-  ]),
-  // Geliştiricilerin idleri.
-  developers: new Set([
-    "544567870776934431"
-  ]),
-  // Discord.js client ayarları.
-  clientOptions: {},
-  // Kullanıcı hatalarındaki uyarı mesajları/olayları.
-  userErrors: {
-    // Arka arkaya komut kullanma limiti aşıldığında.
-    coolDown(message, command, coolDown) {
-      message
-        .reply(
-          `You can use this command again in ${(coolDown / 1000).toFixed(
-            2
-          )} seconds.`
-        )
-        .then((m) => m.delete({ timeout: 5000 }));
-      message.react("⏳");
+    // E tabi, bot tokeni buraya.
+    clientToken: "",
+    // Yasaklı kullanıcıların idleri.
+    blockedUsers: new Set([]),
+    // Geliştiricilerin idleri.
+    developers: new Set([
+      "544567870776934431"
+    ]),
+    // Discord.js client ayarları.
+    clientOptions: {
+      // Okumanızı tavsiye ederim: https://discordjs.guide/popular-topics/intents.html
+      intents: ["GUILDS", "GUILD_MESSAGES", "GUILD_WEBHOOKS", "GUILD_VOICE_STATES"]
     },
-    // Komut kapalı olduğunda
-    disabled(message, command) {
-      message.react("⭕");
-    },
-    // Kullanıcı bottan yasaklı olduğunda.
-    blocked(message, command) {
-      message.react("💥");
-    },
-    // Botun çalışmak için x yertkilerine ihtiyacı olduğunda.
-    botPermsRequired(message, command, perms) {
-      message
-        .reply(
-          `I need ${perms.join(", ")} permissions for this command to work.`
-        )
-        .then((m) => m.delete({ timeout: 10000 }));
-    },
-    // Kullanıcının komutu kullanabilmek için x yetkilerine ihtiyacı olduğunda.
-    userPermsRequired(message, command, perms) {
-      message
-        .reply(
-          `You need ${perms.join(", ")} permissions for this command to work.`
-        )
-        .then((m) => m.delete({ timeout: 10000 }));
-    },
-    // Komut sadece geliştiricilere özel olduğunda.
-    developerOnly(message, command) {
-      message
-        .reply(`Only bot developers can use this command.`)
-        .then((m) => m.delete({ timeout: 5000 }));
-    },
-    // Sunuculara özel olan bir komutu dm'den kullanılmaya çalıştığı zaman.
-    guildOnly(message, command) {
-      message
-        .reply(`This command can only be used on servers.`)
-        .then((m) => m.delete({ timeout: 5000 }));
-    },
-  },
-  // Diğer ayarlar. Bunun içine ne isterseniz koyabilirsiniz.
-  // Ulaşmak için "Underline.config.other" objesini kullanabilirsiniz.
-  other: {},
-  // Komut ismini otomatik olarak aliasların içine
-  // eklersin mi? Varsayılan true.
-  addCommandNameAsAlias: true,
-  // Her komutun varsayılan ayarları her anahtarın ne
-  // işe yaradığını merak ediyorsanız commands/ornekKomut.js'e
-  // bakabilirsiniz.
-  commandDefaults: {
-    desc: "",
-    develoeOnly: false,
-    disabled: false,
-    coolDown: 0,
-    guildOnly: true,
+    // Diğer ayarlar. Bunun içine ne isterseniz koyabilirsiniz.
+    // Ulaşmak için "Underline.config.other" objesini kullanabilirsiniz.
     other: {
-      usage: "{p}{alias}"
+  
     },
-    perms: {
-      bot: [],
-      user: []
+    // Kullanıcı hatalarındaki uyarı mesajları/olayları.
+    userErrors: {
+      // Arka arkaya interaksiyon kullanma limiti aşıldığında.
+      coolDown(interaction, uInteraction, coolDown) {
+        interaction.reply(`You can use this interaction again in ${(coolDown / 1000).toFixed(2)} seconds.`)
+      },
+      // interaksiyon kapalı olduğunda
+      disabled(interaction, uInteraction) {
+        interaction.reply("This interaction is turned off.");
+      },
+      // Kullanıcı bottan yasaklı olduğunda.
+      blocked(interaction, uInteraction) {
+        interaction.reply("You are banned from the bot.");
+      },
+      // Botun çalışmak için x yertkilerine ihtiyacı olduğunda.
+      botPermsRequired(interaction, uInteraction, perms) {
+        interaction.reply(`I need ${perms.join(", ")} privileges for this interaction to work.`)
+      },
+      // Kullanıcının interaksiyonu kullanabilmek için x yetkilerine ihtiyacı olduğunda.
+      userPermsRequired(interaction, uInteraction, perms) {
+        interaction.reply(`You need ${perms.join(", ")} privileges to use this interaction.`)
+      },
+      // interaksiyon sadece geliştiricilere özel olduğunda.
+      developerOnly(interaction, uInteraction) {
+        interaction.reply(`Only bot developers can use this interaction..`)
+      },
+      guildOnly(interaction, uInteraction) {
+        interaction.reply(`This interaction can only be used on servers.`)
+      }
+    },
+    // Her interaksiyonun varsayılan ayarları her anahtarın ne
+    // işe yaradığını merak ediyorsanız interactions/ornekInteraksiyon.js'e
+    // bakabilirsiniz.
+    interactionDefaults: {
+      actionType: "CHAT_INPUT",
+      description: "...",
+      developerOnly: false,
+      guildOnly: true,
+      disabled: false,
+      coolDown: 2,
+      other: {},
+      perms: {
+        bot: [],
+        user: []
+      },
+      options: [],
+      defaultPermission: true
+    },
+    // Bot ilk açıldığında daha hiçbirşey yüklenmeden önce çalışan fonksiyon. Opsiyonel.
+    onBeforeLoad(client) {
+      console.log("[CONFIG] It worked before I started the install.");
+    },
+    // Bot interaksiyonları ve olayları yükledikten sonra çalışan fonksiyon. Opsiyonel.
+    onAfterLoad(client) {
+      console.log("[CONFIG] Worked after installation finished.");
+    },
+    // Bot açıldıktan sonra kullanıma hazır olduktan sonra çalışan fonksiyon. Opsiyonel.
+    async onReady(client) {
+      console.log("[CONFIG] Worked after logging into Discord account.");
+      client.user.setActivity(`/help | Slash Commands Here!`, { type: "WATCHING" });
+      
+    },
+    // interaksiyon üzerinde hiçbir kontrol yapılmadan önce çalışır.
+    // Sadece cevap true ise işleme devam eder.
+    async onInteractionBeforeChecks(uInteraction, interaction) {
+      return true;
+    },
+    // interaksiyontaki bütün kontrolleri geçtikten sonra, interaksiyon
+    // hemen çalıştırılmadan önce çalışır.
+    // Sadece cevap true ise işleme devam eder.
+    //
+    // Other objesini istediğiniz gibi modifiye edebilirsiniz.
+    // Nasılsa altakki fonksiyon her interaksiyon çalışmadan önce çalışır.
+    async onInteraction(uInteraction, interaction, other) {
+      return true;
     }
-  },
-  // Bot ilk açıldığında daha hiçbirşey yüklenmeden önce çalışan fonksiyon. Opsiyonel.
-  onBeforeLoad(client) {
-    console.log("[CONFIG] Yüklemeye başlamadan önce çalıştı.");
-  },
-  // Bot komutları ve olayları yükledikten sonra çalışan fonksiyon. Opsiyonel.
-  onAfterLoad(client) {
-    console.log("[CONFIG] Yükleme bittikten sonra çalıştı.");
-  },
-  // Bot açıldıktan sonra kullanıma hazır olduktan sonra çalışan fonksiyon. Opsiyonel.
-  onReady(client) {
-    console.log("[CONFIG] Discord hesabına giriş yaptıktan sonra çalıştı.");
-    client.user.setActivity(`${this.prefixes[0]}help`, {type: "WATCHING"})
-  },
-  // Komut üzerinde hiçbir kontrol yapılmadan önce çalışır.
-  // Sadece cevap true ise işleme devam eder.
-  async onCommandBeforeChecks(command, message) {
-    return true;
-  },
-  // Komuttaki bütün kontrolleri geçtikten sonra, komut
-  // hemen çalıştırılmadan önce çalışır.
-  // Sadece cevap true ise işleme devam eder.
-  //
-  // Other objesini istediğiniz gibi modifiye edebilirsiniz. Bunu middleware gibi düşünebilirsiniz.
-  // Nasılsa altakki fonksiyon her komut çalışmadan önce çalışır.
-  async onCommand(command, message, other) {
-    return true;
-  }
-})
+  })

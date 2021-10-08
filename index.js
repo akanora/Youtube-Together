@@ -1,231 +1,236 @@
 require("./other/patchConsoleLog");
 const config = require("./config");
-const {plsParseArgs} = require("plsargs");
 const Discord = require("discord.js");
 const chillout = require("chillout");
 const path = require("path");
 const readdirRecursive = require("recursive-readdir");
 const { makeSureFolderExists } = require("stuffs");
-const Command = require("./types/Command");
 const client = new Discord.Client(config.clientOptions);
-require('discord-buttons')(client);
+
+const { DiscordTogether } = require('discord-together');
+client.discordTogether = new DiscordTogether(client);
+
+const interactions = new Discord.Collection();
+const events = new Discord.Collection();
 
 globalThis.Underline = {
-  commands: new Discord.Collection(),
-  events: new Discord.Collection(),
   config,
   client,
-  Command: require("./types/Command"),
-  Event: require("./types/Event")
+  interactions: interactions,
+  events: events,
+  Interaction: require('./types/Interaction'),
+  Event: require('./types/Event'),
+  SlashCommand: require("./types/SlashCommand"),
+  SlashSubCommand: require("./types/SlashSubCommand"),
+  MessageAction: require("./types/MessageAction"),
+  UserAction: require("./types/UserAction"),
 }
 
-console.info("[BİLGİ] Basit Altyapı - by Kıraç Armağan Önal");
+console.info("[INFO] Simple Activity Bot.");
 (async () => {
-  let commandsPath = path.resolve("./commands");
-  await makeSureFolderExists(commandsPath);
+  let interactionsPath = path.resolve("./interactions");
+  await makeSureFolderExists(interactionsPath);
   let eventsPath = path.resolve("./events");
   await makeSureFolderExists(eventsPath);
 
-  config.onBeforeLoad(client);
+  await config.onBeforeLoad(client);
 
   let loadStart = Date.now();
-  let commandFiles = await readdirRecursive(commandsPath);
+  let interactionFiles = await readdirRecursive(interactionsPath);
 
-  commandFiles = commandFiles.filter(i => {
+  interactionFiles = interactionFiles.filter(i => {
     let state = path.basename(i).startsWith("-");
-    if (state) console.warn(`[UYARI] "${i}" dosyası tire ile başladığı için liste dışı bırakıldı.`);
+    if (state) console.warn(`[WARNING] The file "${i}" is unlisted because it starts with a hyphen.`);
     return !state;
   });
 
-  await chillout.forEach(commandFiles, (commandFile) => {
+  await chillout.forEach(interactionFiles, (interactionFile) => {
     let start = Date.now();
-    console.info(`[BİLGİ] "${commandFile}" komut yükleniyor..`)
-    /** @type {import("./types/Command")} */
-    let command = require(commandFile);
+    let rltPath = path.relative(__dirname, interactionFile);
+    console.info(`[INFO] Loading interaction at "${interactionFile}"..`)
+    /** @type {import("./types/Interaction")} */
+    let interactionData = require(interactionFile);
 
-    if (command?._type != "command") {
-      console.warn(`[UYARI] "${commandFile}" komut dosyası boş. Atlanıyor..`);
+    if (interactionData?._type != "interaction") {
+      console.warn(`[WARNING] The interaction file "${rltPath}" is empty. Skipping..`);
       return;
     }
 
-    if (typeof command.name != "string") command.name = path.basename(commandFile).slice(0, -3).replace(/ /g, "");
-    if (!command.aliases.includes(command.name) && config.addCommandNameAsAlias) command.aliases.unshift(command.name);
-
-    if (command.aliases.length == 0) {
-      console.warn(`[UYARI] "${command.name}" adlı bir komut için hiç bir yanad(alias) tanımlanmamış. Atlanıyor..`);
+    if (!interactionData.type) {
+      console.warn(`[WARNING] A type is not specified for your interaction file "${rltPath}". It is skipping.`);
       return;
     }
 
-    if (Underline.commands.has(command.name)) {
-      console.warn(`[UYARI] "${command.name}" adlı bir komut daha önceden zaten yüklenmiş. Atlanıyor.`)
+    if (!interactionData.id) {
+      console.warn(`[WARNING] The interaction file "${rltPath}" does not have an id. Skipping..`);
       return;
     }
 
-    if (typeof command.onCommand != "function") {
-      console.error(`[HATA] "${command.name}" adlı komut geçerli bir onCommand fonksiyonuna sahip değil! Atlanıyor.`);
+    if (typeof interactionData.name != "string") {
+      console.warn(`[WARNING] The interaction file "${rltPath}" does not have a name. Skipping..`);
+      return;
+    }
+    if (interactionData.actionType == "CHAT_INPUT") interactionData.name = interactionData.name.replace(/ /g, "").toLowerCase();
+
+    if (typeof interactionData.type == "SUB_COMMAND" && !interactionData.subName) {
+      console.warn(`[WARNING] The interaction file "${rltPath}" is of type "SUB_COMMAND" but does not contain a subName. Skipping..`);
+      return;
+    }
+
+
+    if (Underline.interactions.has(interactionData.id)) {
+      console.warn(`[WARNING] An interaction with id "${interactionData.id}" is already installed. It is skipping.`)
+      return;
+    }
+
+    if (typeof interactionData.onInteraction != "function") {
+      console.error(`[ERROR] Interaction file "${rltPath}" does not have a valid onInteraction! It is skipping.`);
       return;
     };
 
-    if (!command.guildOnly && (command.perms.bot.length != 0 || command.perms.user.length != 0)) {
-      console.warn(`[UYARI] "${command.name}" adlı komut sunuculara özel olmamasına rağmen özel perm kullanıyor.`);
+    if (!interactionData.guildOnly && (interactionData.perms.bot.length != 0 || interactionData.perms.user.length != 0)) {
+      console.warn(`[WARNING] The interaction file "${rltPath}" is not server specific but uses custom perm.`);
     }
 
-    Underline.commands.set(command.name, command);
-    command.onLoad(client);
-    console.info(`[BİLGİ] "${command.name}" adlı komut yüklendi. (${Date.now() - start}ms sürdü.)`);
+
+    Underline.interactions.set(interactionData.id, interactionData);
+    interactionData.onLoad(client);
+    console.info(`[INFO] "/${interactionData.name}${interactionData.subName ? ` ${interactionData.subName}` : ""}" (${interactionData.id}) named interaction loaded. (${Date.now() - start}ms.)`);
   });
 
-  if (Underline.commands.size) {
-    console.info(`[BİLGİ] ${Underline.commands.size} komut yüklendi.`);
+  if (Underline.interactions.size) {
+    console.info(`[INFO] ${Underline.interactions.size} interaction loaded.`);
   } else {
-    console.warn(`[UYARI] Hiçbir komut yüklenmedi, herşey yolunda mı?`);
+    console.warn(`[WARNING] No interactions loaded, is everything ok?`);
   }
 
   let eventFiles = await readdirRecursive(eventsPath);
 
   eventFiles = eventFiles.filter(i => {
     let state = path.basename(i).startsWith("-");
-    if (state) console.warn(`[UYARI] "${i}" dosyası tire ile başladığı için liste dışı bırakıldı.`);
+    if (state) console.warn(`[WARNING] The file "${i}" is unlisted because it starts with a hyphen.`);
     return !state;
   });
 
   await chillout.forEach(eventFiles, async (eventFile) => {
     let start = Date.now();
-    console.info(`[BİLGİ] "${eventFile}" event yükleniyor..`);
+    let rltPath = path.relative(__dirname, eventFile);
+    console.info(`[INFO] Loading event "${eventFile}"..`);
 
     /** @type {import("./types/Event")} */
     let event = require(eventFile);
 
     if (event?._type != "event") {
-      console.warn(`[UYARI] "${eventFile}" event dosyası boş. Atlanıyor..`);
+      console.warn(`[WARNING] The event file "${rltPath}" is empty. Skipping....`);
       return;
     }
 
-    if (typeof event.name != "string") event.name = path.basename(eventFile).slice(0, -3).replace(/ /g, "");
+    if (typeof event.id != "string") event.id = path.basename(eventFile).slice(0, -3).replace(/ /g, "");
 
-    if (Underline.events.has(event.name)) {
-      console.warn(`[UYARI] "${event.name}" adlı bir event daha önceden zaten yüklenmiş. Atlanıyor.`);
+    if (Underline.events.has(event.id)) {
+      console.warn(`[WARNING] An event named "${event.id}" has already been loaded. It's skipping.`);
       return;
     }
 
     if (typeof event.onEvent != "function") {
-      console.error(`[HATA] "${event.name}" adlı event geçerli bir onEvent fonksiyonuna sahip değil! Atlanıyor.`);
+      console.error(`[ERROR] Event file "${rltPath}" does not have a valid onEvent function! It's skipping.`);
       return;
     };
 
-    Underline.events.set(event.name, event);
+    Underline.events.set(event.id, event);
     event.onLoad(client);
-    console.info(`[BİLGİ] "${event.name}" adlı event yüklendi. (${Date.now() - start}ms sürdü.)`);
+    console.info(`[INFO] ("${rltPath}") The event "${event.id}" has been loaded. (It took ${Date.now() - start}ms.)`);
   })
 
   if (Underline.events.size) {
-    console.info(`[BİLGİ] ${Underline.events.size} event yüklendi.`);
+    console.info(`[INFO] The ${Underline.events.size} event has been loaded.`);
   } else {
-    console.warn(`[UYARI] Hiçbir event yüklenmedi, herşey yolunda mı?`);
+    console.warn(`[WARNING] No events loaded, is everything ok?`);
   }
 
-  client.on("message", async (message) => {
-    if (message.author.id == client.user.id) return;
+  client.on("interactionCreate", async (interaction) => {
+    if (!(interaction.isCommand() || interaction.isContextMenu())) return;
 
-    let usedPrefix = "";
-    let usedAlias = "";
-    let content = message.content;
-    
-    await chillout.forEach(config.prefixes, (p) => {
-      if (content.slice(0, p.length).toLowerCase() == p.toLowerCase()) {
-        usedPrefix = p;
-        usedAlias = content.slice(p.length).trim().split(" ", 2)[0];
-        return chillout.StopIteration;
+    let command = Underline.interactions.find(cmd => {
+      if (cmd.type == "SUB_COMMAND") {
+        return cmd.name == interaction.commandName && cmd.subName == interaction.options.getSubcommand();
+      } else if (cmd.type == "COMMAND") {
+        return cmd.name == interaction.commandName;
       }
     });
 
-    if (!usedPrefix || !usedAlias) return;
-    let lowerUsedAlias = usedAlias.toLowerCase();
-    let args = content.trim().split(" ");
-    if (args[0] == usedPrefix) {
-      args.shift();
-      args[0] = `${usedPrefix}${usedAlias}`;
+    if (!command) return;
+
+    if (config.autoDefer) interaction.defer();
+
+    let shouldRun1 = await config.onInteractionBeforeChecks(command, interaction);
+
+    if (!shouldRun1) return;
+
+    if (command.developerOnly && !config.developers.has(interaction.user.id)) {
+      config.userErrors.developerOnly(interaction, command);
+      return;
     }
-    let plsargs = plsParseArgs(args);
 
-    chillout.forEach(
-      Underline.commands.array(),
-      /**
-       * @param {Command} command
-       */
-      async (command) => {
-        if (!command.aliases.some(i => i.toLowerCase() == lowerUsedAlias)) return;
+    if (command.disabled) {
+      config.userErrors.disabled(interaction, command);
+      return;
+    }
 
-        let shouldRun1 = await config.onCommandBeforeChecks(command, message);
-        if (!shouldRun1) return chillout.StopIteration;
+    if (config.blockedUsers.has(interaction.user.id)) {
+      config.userErrors.blocked(interaction, command);
+      return;
+    }
 
-        if (command.disabled) {
-          config.userErrors.disabled(message, command);
-          return chillout.StopIteration;
-        }
-        
-        if (command.developerOnly && !config.developers.has(message.author.id)) {
-          config.userErrors.developerOnly(message, command);
-          return chillout.StopIteration;
-        }
-
-        if (config.blockedUsers.has(message.author.id)) {
-          config.userErrors.blocked(message, command);
-          return chillout.StopIteration;
-        }
-
-        if (command.guildOnly && message.channel.type == "dm") {
-          config.userErrors.guildOnly(message, command);
-          return chillout.StopIteration;
-        }
-
-        let userCooldown = command.coolDowns.get(message.author.id) || 0;
-        if (Date.now() < userCooldown) {
-          config.userErrors.coolDown(message, command, userCooldown - Date.now());
-          return chillout.StopIteration;
-        }
-
-        function setCoolDown(duration = 0) {
-          if (typeof duration == "number" && duration > 0) {
-            return command.coolDowns.set(message.author.id, Date.now() + duration);
-          } else {
-            return command.coolDowns.delete(message.author.id);
-          }
-        }
-
-        let other = {
-          args, plsargs, usedPrefix, usedAlias, setCoolDown
-        };
-
-        if (command.coolDown > 0) {
-          setCoolDown(command.coolDown);
-        }
-
-        if (command.guildOnly && command.perms.bot.length != 0 && !command.perms.bot.every(perm => message.guild.me.permissions.has(perm))) {
-          config.userErrors.botPermsRequired(message, command, command.perms.bot);
-          return chillout.StopIteration;
-        }
-
-        if (command.guildOnly && command.perms.user.length != 0 && !command.perms.user.every(perm => message.member.permissions.has(perm))) {
-          config.userErrors.userPermsRequired(message, command, command.perms.user);
-          return chillout.StopIteration;
-        }
+    if (command.guildOnly && interaction.channel.type == "dm") {
+      config.userErrors.guildOnly(interaction, command);
+      return;
+    }
 
 
-        (async () => {
-          let shouldRun2 = await config.onCommand(command, message, other);
-          if (!shouldRun2) return;
-          await command.onCommand(message, other);
-        })();
+    let other = {};
 
-        return chillout.StopIteration;
+    let userCooldown = command.coolDowns.get(interaction.user.id) || 0;
+    if (Date.now() < userCooldown) {
+      config.userErrors.coolDown(interaction, command, userCooldown - Date.now());
+      return;
+    }
+
+    function setCoolDown(duration = 0) {
+      if (typeof duration == "number" && duration > 0) {
+        return command.coolDowns.set(interaction.user.id, Date.now() + duration);
+      } else {
+        return command.coolDowns.delete(interaction.user.id);
       }
-    );
+    }
+    other.setCoolDown = setCoolDown;
+
+    if (command.coolDown > 0) {
+      setCoolDown(command.coolDown);
+    }
+
+    if (command.guildOnly && command.perms.bot.length != 0 && !command.perms.bot.every(perm => interaction.guild.me.permissions.has(perm))) {
+      config.userErrors.botPermsRequired(interaction, command, command.perms.bot);
+      return;
+    }
+
+    if (command.guildOnly && command.perms.user.length != 0 && !command.perms.user.every(perm => interaction.member.permissions.has(perm))) {
+      config.userErrors.userPermsRequired(interaction, command, command.perms.user);
+      return;
+    }
+
+    (async () => {
+      let shouldRun2 = await config.onInteraction(command, interaction, other);
+      if (!shouldRun2) return;
+      await command.onInteraction(interaction, other);
+    })();
+
+    return;
   })
 
   {
     /** @type {Map<string, (import("./types/Event"))[]>} */
-    let eventsMapped = Underline.events.array().reduce((all, cur) => {
+    let eventsMapped = Underline.events.reduce((all, cur) => {
       if (!all.has(cur.eventName)) all.set(cur.eventName, []);
       all.get(cur.eventName).push(cur);
       return all;
@@ -237,7 +242,7 @@ console.info("[BİLGİ] Basit Altyapı - by Kıraç Armağan Önal");
        * @param {[string, (import("./types/Event"))[]>]} param0
        */
       ([eventName, events]) => {
-        console.info(`[BİLGİ] Event "${eventName}" için ${events.length} dinleyici yüklendi!`);
+        console.info(`[INFO] ${events.length} listener loaded for event "${eventName}"!`);
         client.on(eventName, (...args) => {
           setTimeout(() => {
             chillout.forEach(events, (event) => {
@@ -245,24 +250,24 @@ console.info("[BİLGİ] Basit Altyapı - by Kıraç Armağan Önal");
                 event.onEvent(...args);
               }
             });
-          },0)
+          }, 0)
         });
       }
     )
   }
 
-  console.info(`[BİLGİ] Herşey ${Date.now() - loadStart}ms içerisinde yüklendi!`);
+  console.info(`[INFO] Everything loaded in ${Date.now() - loadStart}ms!`);
 
-  commandFiles = 0;
+  interactionFiles = 0;
   eventFiles = 0;
   loadStart = 0;
 
-  config.onAfterLoad(client);
+  await config.onAfterLoad(client);
 
   await client.login(config.clientToken);
-  console.info("[BİLGİ] Discord'a bağlanıldı!", client.user.tag);
+  console.info("[INFO] Connected to Discord!", client.user.tag);
+
   config.onReady(client);
 })();
-
 
 

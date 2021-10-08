@@ -1,13 +1,10 @@
 const Discord = require("discord.js");
-const Command = require("./Command");
+const Interaction = require("./Interaction");
 
 class Config {
 
   /** @private */
   _type = "config";
-
-  /** @type {string[]} */
-  prefixes = [];
 
   /** @type {string} */
   clientToken = "";
@@ -15,20 +12,23 @@ class Config {
   /** @type {Discord.ClientOptions} */
   clientOptions = {};
 
-  /** @type {{coolDown(message: Discord.Message, command: Command, timeout: number): void, disabled(message: Discord.Message, command: Command): void, blocked(message: Discord.Message, command: Command): void, botPermsRequired(message: Discord.Message, command: Command, perms: string[]): void, userPermsRequired(message: Discord.Message, command: Command, perms: string[]): void, developerOnly(message: Discord.Message, command: Command): void, guildOnly(message: Discord.Message, command: Command): void}} */
+  /** @type {{coolDown(interaction: Discord.CommandInteraction, interaction: Interaction, timeout: number): void, disabled(interaction: Discord.CommandInteraction, interaction: Interaction): void, blocked(interaction: Discord.CommandInteraction, interaction: Interaction): void, botPermsRequired(interaction: Discord.CommandInteraction, interaction: Interaction, perms: string[]): void, userPermsRequired(interaction: Discord.CommandInteraction, interaction: Interaction, perms: string[]): void, developerOnly(interaction: Discord.CommandInteraction, interaction: Interaction): void, guildOnly(interaction: Discord.CommandInteraction, interaction: Interaction): void}} */
   userErrors = {};
 
   /** @type {{[key: string|number]: any}} */
   other = {};
 
   /** @type {Command} */
-  commandDefaults = {};
+  interactionDefaults = {};
 
   /** @type {Set<string>} */
   blockedUsers = new Set();
 
   /** @type {Set<string>} */
   developers = new Set();
+
+  /** @type {boolean} */
+  autoDefer = false;
 
   /** @type {(client:import("discord.js").Client)=>void} */
   onBeforeLoad = () => { };
@@ -39,35 +39,16 @@ class Config {
   /** @type {(client:import("discord.js").Client)=>void} */
   onReady = () => { };
 
-  /** @type {(command:Command, message: import("discord.js").Message)=>void} */
-  onCommandBeforeChecks = async () => { return true; };
+  /** @type {(interaction:Command, interaction: Discord.CommandInteraction} */
+  onInteractionBeforeChecks = async () => { return true; };
 
-  /** @type {(command:Command, message: import("discord.js").Message, other: {plsargs: import("plsargs/src/Result").Result, args: string[], setCoolDown(duration:number): void, usedPrefix: string, usedAlias: string, [key: string|number]: any)=>void} */
-  onCommand = async () => { return true; };
-
-  /** @type {Boolean} */
-  addCommandNameAsAlias = true;
+  /** @type {(interaction:Command, interaction: Discord.CommandInteraction, other: {setCoolDown(duration:number): void, [key:string|number]: any)=>void} */
+  onInteraction = async () => { return true; };
 
   /**
    * @param {Config} arg 
    */
   constructor(arg = {}) {
-    if (Array.isArray(arg.prefixes) && arg.prefixes.length != 0) {
-      this.prefixes = arg.prefixes;
-    } else {
-      console.warn(`[UYARI] Ayarlar içerisinde hiçbir prefix belirtilmediği için var sayılan olarak "!" kullanılıyor.`);
-      this.prefixes = ["!"];
-    }
-
-    if (this.prefixes.some(i => typeof i != "string")) {
-      console.error("[HATA] Ayarlardaki prefixler sadece yazı olabilir.");
-      process.exit(-1);
-    }
-
-    if (this.prefixes.some(i => i.includes(" "))) {
-      console.error("[HATA] Ayarlardaki prefixler içerlerinde boşluk içeremezler.");
-      process.exit(-1);
-    }
 
     if (!(typeof arg.clientToken == "string" && arg.clientToken.length != 0)) {
       console.error("[HATA] Ayarlar dosayasında geçersiz bot tokeni girişi yapılmış.");
@@ -98,20 +79,20 @@ class Config {
     this.userErrors = arg.userErrors;
     this.other = arg.other || {};
 
-    this.addCommandNameAsAlias = Boolean(arg.addCommandNameAsAlias ?? true);
-
-    this.commandDefaults = typeof arg.commandDefaults == "object" ? arg.commandDefaults : {
-      aliases: [],
-      desc: "",
-      develoeOnly: false,
+    this.interactionDefaults = typeof arg.interactionDefaults == "object" ? arg.interactionDefaults : {
+      actionType: "CHAT_INPUT",
+      description: "...",
+      developerOnly: false,
+      guildOnly: true,
       disabled: false,
       coolDown: -1,
-      guildOnly: true,
       other: {},
       perms: {
-        bot: ["SEND_MESSAGES"],
+        bot: [],
         user: []
-      }
+      },
+      options: [],
+      defaultPermission: true
     };
 
     if (
@@ -124,12 +105,14 @@ class Config {
       arg.developers instanceof Set
     ) this.developers = new Set([...arg.developers]);
 
+    this.autoDefer = Boolean(arg.autoDefer ?? false);
+
     if (typeof arg.onBeforeLoad == "function") this.onBeforeLoad = arg.onBeforeLoad;
     if (typeof arg.onAfterLoad == "function") this.onAfterLoad = arg.onAfterLoad;
     if (typeof arg.onReady == "function") this.onReady = arg.onReady;
     
-    if (typeof arg.onCommandBeforeChecks == "function") this.onCommandBeforeChecks = arg.onCommandBeforeChecks;
-    if (typeof arg.onCommand == "function") this.onCommand = arg.onCommand;
+    if (typeof arg.onInteractionBeforeChecks == "function") this.onInteractionBeforeChecks = arg.onInteractionBeforeChecks;
+    if (typeof arg.onInteraction == "function") this.onInteraction = arg.onInteraction;
   }
 }
 

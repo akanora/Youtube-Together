@@ -1,11 +1,18 @@
+// Global değişkenlerde otomatik tamamlama desteği için.
 
 interface Underline {
-  commands: import("discord.js").Collection<string, import("./types/Command") >
-  events: import("discord.js").Collection<string, import("./types/Event") >
-  config: import("./types/Config");
-  client: import("discord.js").Client;
-  Command: typeof import("./types/Command");
-  Event: typeof import("./types/Event");
-}
-
-declare var Underline: Underline;
+    interactions: import("discord.js").Collection<string, import("./types/Interaction") >
+    events: import("discord.js").Collection<string, import("./types/Event") >
+    config: import("./types/Config");
+    client: import("discord.js").Client;
+    Interaction: typeof import("./types/Interaction"),
+    SlashCommand: typeof import("./types/SlashCommand"),
+    SlashSubCommand: typeof import("./types/SlashSubCommand"),
+    MessageAction: typeof import("./types/MessageAction"),
+    UserAction: typeof import("./types/UserAction"),
+    Event: typeof import("./types/Event")
+  }
+  
+  
+  
+  declare var Underline: Underline;
