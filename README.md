@@ -4,7 +4,7 @@ Watch youtube videos with your friends on Discord.
 
 # INVITE
 
-https://discord.com/oauth2/authorize?client_id=831408659262472222&scope=bot&permissions=16385
+https://discord.com/api/oauth2/authorize?client_id=831408659262472222&permissions=16385&scope=bot%20applications.commands
 
 # Example Usage
 
